@@ -21,7 +21,7 @@ To perform this analysis, I leveraged the following tools:
 - **Visual Studio Code** – as the development environment for writing and testing queries.
 - **Git & GitHub** – for version control, collaboration, and hosting the project repository.
 # The Analysis
-Each query for this project aimed at investigating specific aspects of the data engineering job market. Here's how i approached the first two questions
+Each query for this project aimed at investigating specific aspects of the data engineering job market. Here's how i approached each question:
 
 ### 1. Top paying Data Engineering jobs
 To identify the top-paying data engineering roles, I queried job postings with non-null salaries, focusing on “Data Engineer” positions available globally. The query retrieves the job ID, title, company, location, schedule type, salary, and posting date, ordered by highest salary
@@ -106,6 +106,103 @@ Here's the breakdown of skills required for top-paying data engineering jobs:
 
 ![Top Paying Roles](https://github.com/fasaint/DataEngineer_Salary_Skills_Analysis/blob/main/assets/2_top_skills.png)
 *Bar graph visualizing the top skills for data engineers*
+
+### 3. Most In-Demand Skills
+To identify the most in-demand skills, I counted occurrences of each skill across all Data Engineer job postings. This shows which skills are highly sought after in the current job market.
+
+```sql
+SELECT 
+    skills AS skill_name,
+    COUNT(skills_job_dim.job_id) AS skill_demand_count
+FROM job_postings_fact
+INNER JOIN skills_job_dim
+    USING(job_id)
+INNER JOIN skills_dim
+    USING(skill_id)
+WHERE 
+    job_title_short = 'Data Engineer'
+GROUP BY skill_name
+ORDER BY skill_demand_count DESC
+LIMIT 10;
+```
+Breakdown:
+- Python, SQL, and Spark are the most frequently required skills.
+- These foundational tools are essential for building, maintaining, and optimizing data pipelines.
+- Mastery of these skills is key for both entry-level and senior roles.
+
+### 4. Skills Driving Salary
+To identify which skills are associated with higher salaries, I calculated the average salary for job postings requiring each skill. This highlights which skills contribute to better compensation in Data Engineering roles.
+
+```sql
+SELECT 
+    skills AS skill_name,
+    ROUND(AVG(salary_year_avg), 2) AS avg_year_salary
+FROM job_postings_fact
+INNER JOIN skills_job_dim
+    USING(job_id)
+INNER JOIN skills_dim
+    USING(skill_id)
+WHERE 
+    job_title_short = 'Data Engineer'
+    AND salary_year_avg IS NOT NULL
+GROUP BY skill_name
+ORDER BY avg_year_salary DESC
+LIMIT 25;
+```
+Breakdown:
+- Specialized technologies like Node, MongoDB, Solidity, Rust, Kafka, and Kubernetes command higher pay.
+- Expertise in niche areas increases earning potential.
+- These skills are highly valued in top-tier positions.
+
+### 5. Optimal Skills to Learn
+To determine the most optimal skills to learn for career growth in data engineering, I combined the insights from the most in-demand skills and those driving higher salaries. This approach identifies skills that are both frequently required and associated with better compensation.
+
+```sql
+WITH top_demand_skills AS (
+    SELECT 
+        skill_id,
+        skills,
+        COUNT(skills_job_dim.job_id) AS skill_demand_count
+    FROM job_postings_fact
+    INNER JOIN skills_job_dim
+        USING(job_id)
+    INNER JOIN skills_dim
+        USING(skill_id)
+    WHERE 
+        job_title_short = 'Data Engineer'
+        AND salary_year_avg IS NOT NULL
+        AND job_work_from_home = TRUE
+    GROUP BY skill_id, skills
+), top_skill_salary AS (
+    SELECT 
+        skill_id,
+        skills,
+        ROUND(AVG(salary_year_avg), 2) AS avg_year_salary
+    FROM job_postings_fact
+    INNER JOIN skills_job_dim
+        USING(job_id)
+    INNER JOIN skills_dim
+        USING(skill_id)
+    WHERE 
+        job_title_short = 'Data Engineer'
+        AND salary_year_avg IS NOT NULL
+        AND job_work_from_home = TRUE
+    GROUP BY skill_id, skills
+)
+SELECT 
+    top_demand_skills.skill_id,
+    top_demand_skills.skills,
+    skill_demand_count,
+    avg_year_salary
+FROM top_demand_skills
+INNER JOIN top_skill_salary 
+    USING(skill_id)
+WHERE skill_demand_count > 10
+ORDER BY 
+    avg_year_salary DESC,
+    skill_demand_count DESC
+LIMIT 25;
+```
 
 #  What i learned
 Throughout this adventure, I dived deep into working with data, exploring its patterns and stories. I strengthened my SQL querying skills, learned how to aggregate and summarize large datasets effectively, and developed a sharper analytical mindset. Each challenge pushed me to think critically, uncover insights, and approach problems more strategically, making me more confident in turning raw data into meaningful conclusions.
