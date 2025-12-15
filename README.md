@@ -229,6 +229,9 @@ ORDER BY
 LIMIT 25;
 ```
 
+![Optimal Skills](/Data_jobs_analysis/assets/5_optimal_skills.png)
+*Scatter plot visualizing the optimal skills for data engineers*
+
 #  What i learned
 Throughout this adventure, I dived deep into working with data, exploring its patterns and stories. I strengthened my SQL querying skills, learned how to aggregate and summarize large datasets effectively, and developed a sharper analytical mindset. Each challenge pushed me to think critically, uncover insights, and approach problems more strategically, making me more confident in turning raw data into meaningful conclusions.
 
